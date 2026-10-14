@@ -1,0 +1,6 @@
+*.sh text eol=lf
+*.prop text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.webp binary
+*.zip binary
