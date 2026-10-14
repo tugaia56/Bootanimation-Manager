@@ -11,7 +11,7 @@ Modulo Magisk / KernelSU con **interfaccia WebUI** per vedere in anteprima, scar
 - **Download & use** (Online tab): downloads, installs and activates it; one reboot is enough / scarichi, installi e attivi, basta un riavvio
 - **Use this**: turns the chosen one on and the others off / accende quella scelta e spegne le altre
 - **From folder**: install zips already on the phone, **Remove** the ones you no longer want / installa zip già sul telefono e rimuovi quelle che non servono
-- **Update app**: updates the Manager (and its catalog) from inside the app, no reboot / aggiorna il Manager (e il catalogo) dall'app, senza riavvio. It also checks by itself every 12 hours / controlla da solo ogni 12 ore
+- **Update** tab: updates the Manager (and its catalog) from inside the app, straight from this repository, no reboot / aggiorna il Manager (e il catalogo) dall'app, direttamente da questo repository, senza riavvio. It also checks by itself every 12 hours / controlla da solo ogni 12 ore
 - Italian and English / italiano e inglese
 
 ## Requirements / Requisiti

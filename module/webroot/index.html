@@ -12,6 +12,8 @@ header{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 14px 8p
 h1{margin:0 0 8px;font-size:19px}
 h1 span{color:var(--ac)}
 .row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:8px}
+#tabs .btn{flex:1 1 auto;padding:7px 6px;text-align:center}
+#upd.has::after{content:' \25CF';color:var(--warn)}
 .row::-webkit-scrollbar{display:none}
 .btn{white-space:nowrap;flex:none;border:1px solid #3a3a52;background:var(--card);color:var(--tx);border-radius:999px;padding:7px 13px;font-size:13px}
 .btn.on{background:var(--ac);color:#101018;border-color:var(--ac)}
@@ -40,11 +42,12 @@ footer{position:fixed;left:0;right:0;bottom:0;background:#191924;border-top:1px 
 </head>
 <body>
 <header>
-  <h1>Bootanimation <span>Manager</span> <button class="btn" id="lang" style="float:right;padding:4px 11px"></button><button class="btn" id="upd" data-i="updBtn" style="float:right;padding:4px 11px;margin-right:6px"></button></h1>
+  <h1>Bootanimation <span>Manager</span> <button class="btn" id="lang" style="float:right;padding:4px 11px"></button></h1>
   <div class="row" id="tabs">
     <button class="btn on" data-t="inst" data-i="tInst"></button>
     <button class="btn" data-t="web" data-i="tWeb"></button>
     <button class="btn" data-t="dir" data-i="tDir"></button>
+    <button class="btn" id="upd" data-i="tUpd"></button>
   </div>
   <input id="q" type="search" data-ip="search" placeholder="">
 </header>
@@ -59,7 +62,7 @@ footer{position:fixed;left:0;right:0;bottom:0;background:#191924;border-top:1px 
 const MOD = '/data/adb/modules/oxybootanim';
 const BAM = 'sh ' + MOD + '/bam.sh';
 const I18N = {
- it: {tInst:'Installate', tWeb:'Online', tDir:'Da cartella', search:'Cerca...', active:'attiva', off:'spenta', pend:'serve riavvio', rm:'da rimuovere', inst:'installata',
+ it: {tInst:'Installate', tWeb:'Online', tDir:'Da cartella', tUpd:'Aggiorna', search:'Cerca...', active:'attiva', off:'spenta', pend:'serve riavvio', rm:'da rimuovere', inst:'installata',
   playBtn:'Prova ora', useBtn:'Usa questa', rmBtn:'Rimuovi', dl:'Scarica e installa', dlUse:'Scarica e usa', installUse:'Installa e usa', oneReboot:'Basta un solo riavvio per vederla.', installBtn:'Installa', allOff:'Disattiva tutte (stock)', reboot:'Riavvia',
   needReboot:'Per applicare le modifiche serve un riavvio.', playing:'Riproduzione in corso...', noItems:'Nessuna bootanimation.', loading:'Carico...',
   askUse:'Usare questa bootanimation? Le altre verranno spente. Per vederla serve un riavvio.', askAllOff:'Spegnere tutte le bootanimation? Al riavvio tornerà quella di sistema.',
@@ -68,7 +71,7 @@ const I18N = {
   getting:'Preparo il download...', downloading:'Scarico...', installing:'Installo...', done:'Fatto: ', fail:'Errore: ', webNote:'Gli zip vengono scaricati da pCloud e installati spenti: poi scegli quale usare.',
   dirNote:'Metti gli zip in questa cartella del telefono e premi Cerca zip.', ofNote:'Quando uno zip viene sostituito su pCloud, il suo link smette di funzionare.', size:'MB', st:'Stato',
   updBtn:'Aggiorna app', updChecking:'Cerco aggiornamenti...', updAvail:'Aggiornamento disponibile: ', updNone:'Il Manager è già aggiornato (', updFail:'Aggiornamento non riuscito: ', updApplying:'Aggiorno il Manager...', updDone:'Aggiornato. Riapro...', askUpd:'Aggiornare il Manager? Non serve riavviare il telefono.'},
- en: {tInst:'Installed', tWeb:'Online', tDir:'From folder', search:'Search...', active:'active', off:'off', pend:'reboot needed', rm:'to be removed', inst:'installed',
+ en: {tInst:'Installed', tWeb:'Online', tDir:'From folder', tUpd:'Update', search:'Search...', active:'active', off:'off', pend:'reboot needed', rm:'to be removed', inst:'installed',
   playBtn:'Try now', useBtn:'Use this', rmBtn:'Remove', dl:'Download & install', dlUse:'Download & use', installUse:'Install & use', oneReboot:'One reboot is enough to see it.', installBtn:'Install', allOff:'Turn all off (stock)', reboot:'Reboot',
   needReboot:'A reboot is needed to apply the changes.', playing:'Playing...', noItems:'No bootanimations.', loading:'Loading...',
   askUse:'Use this bootanimation? The others will be turned off. A reboot is needed to see it.', askAllOff:'Turn off all bootanimations? The system one comes back after a reboot.',
@@ -85,7 +88,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const log = s => { const l = $('#log'); l.textContent += s + '\n'; l.scrollTop = l.scrollHeight; };
 let tab = 'inst', META = {}, CAT = [], INST = [], DIRZ = [], dirPath = '/sdcard/Download/Bootanimation', needReboot = false, busy = false, UPD = null;
-// public pCloud link of the latest Manager zip: replacing the file on pCloud keeps this link working
+// latest Manager zip: GitHub first, the old public pCloud link as a fallback
+const SELF_URL = 'https://raw.githubusercontent.com/tugaia56/Bootanimation-Manager/main/release/Magisk_Bootanimation_Manager_A14-A17.zip';
 const SELF_CODE = 'XZHGmmJZbX9wQ2SXRTzKyzxhXTVgHbB2jeA7';
 const SELF_ZIP = '/data/local/tmp/oxybam/manager-new.zip';
 const parseProps = s => { const o = {}; s.split('\n').forEach(l => { const m = l.trim().match(/^(\w+)=(.*)$/); if (m) o[m[1]] = m[2]; }); return o; };
@@ -123,6 +127,7 @@ function renderBanner() {
     (needReboot ? '<div class="banner"><span>' + t('needReboot') + '</span><button class="btn pri" id="rb">' + t('reboot') + '</button></div>' : '');
   const b = $('#rb'); if (b) b.onclick = async () => { if (await ask(t('askReboot'))) exec('reboot'); };
   const u = $('#ub'); if (u) u.onclick = applyUpdate;
+  $('#upd').classList.toggle('has', !!UPD);
 }
 function pv(id) {
   return '<div class="pv"><img loading="lazy" src="previews/' + encodeURIComponent(id) + '.webp" onerror="this.outerHTML=\'<div class=ph>no preview</div>\'"></div>';
@@ -245,11 +250,14 @@ $('#lang').addEventListener('click', () => { LANG = LANG === 'en' ? 'it' : 'en';
 
 // downloads the latest Manager zip and returns its properties (null when it cannot be reached)
 async function fetchLatest() {
-  const a = await bam('api', SELF_CODE);
-  let j; try { j = JSON.parse(a.out); } catch (e) { j = null; }
-  if (!j || j.result !== 0 || !j.hosts || !j.path) return {err: a.out.trim().slice(0, 120) || t('needNet')};
-  const d = await bam('dl', 'https://' + j.hosts[0] + j.path, 'manager-new.zip');
-  if (!/ok/.test(d.out)) return {err: d.out.trim().slice(0, 120)};
+  let d = await bam('dl', SELF_URL + '?t=' + Date.now(), 'manager-new.zip');
+  if (!/ok/.test(d.out)) {
+    const a = await bam('api', SELF_CODE);
+    let j; try { j = JSON.parse(a.out); } catch (e) { j = null; }
+    if (!j || j.result !== 0 || !j.hosts || !j.path) return {err: a.out.trim().slice(0, 120) || t('needNet')};
+    d = await bam('dl', 'https://' + j.hosts[0] + j.path, 'manager-new.zip');
+    if (!/ok/.test(d.out)) return {err: d.out.trim().slice(0, 120)};
+  }
   const v = parseProps((await bam('selfver', SELF_ZIP)).out);
   if (v.id !== 'oxybootanim') return {err: 'bad zip'};
   return v;
