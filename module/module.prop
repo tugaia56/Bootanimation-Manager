@@ -1,6 +1,6 @@
 id=oxybootanim
 name=[Bootanimation] Manager
-version=v5
-versionCode=5
+version=v6
+versionCode=6
 author=Tullio
 description=Preview, install, download and choose your bootanimation from a WebUI. Anteprima, installa, scarica e scegli la bootanimation da una interfaccia WebUI.
