@@ -48,13 +48,11 @@ play)
   setprop service.bootanim.exit 1
   setprop ctl.stop bootanim
   nsenter -t 1 -m -- umount "$T" </dev/null
-  # after the preview the screen can stay drawn in a corner (stale projection): re-apply the display override exactly as it was
-  for i in 1 2; do
-    sleep 1
-    wm size reset; wm density reset
-    [ -n "$bs" ] && wm size "$bs"
-    [ -n "$bd" ] && wm density "$bd"
-  done
+  # after the preview the screen stays drawn in a corner (stale projection): re-apply the display override exactly as it was, right away
+  sleep 0.3
+  wm size reset; wm density reset
+  [ -n "$bs" ] && wm size "$bs"
+  [ -n "$bd" ] && wm density "$bd"
   echo ok
   ;;
 use)
