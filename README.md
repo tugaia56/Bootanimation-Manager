@@ -24,10 +24,15 @@ Modulo Magisk / KernelSU con **interfaccia WebUI** per vedere in anteprima, scar
 2. Open the module with its **WebUI** button.
 3. Online tab -> pick one -> **Download & use** -> reboot once.
 
+## App drawer icon (optional) / Icona nel cassetto delle app (opzionale)
+`release/BootanimManager-launcher.apk` adds a **Bootanimation Manager** icon to the app drawer that opens the WebUI directly, so you don't have to open KernelSU first. It needs the **KsuWebUI** app (`io.github.a13e300.ksuwebui`) installed. Source in `launcher/` (build with `launcher/build.sh`).
+Aggiunge l'icona **Bootanimation Manager** nel cassetto delle app: apre subito la pagina del Manager, senza passare da KernelSU. Serve l'app **KsuWebUI** installata.
+
 ## Repository layout
 - `module/` - the module source (`bam.sh` shell helper, `webroot/` WebUI, `catalog.json`, previews)
 - `tools/make_zip.py` - builds the zip into `release/`
-- `release/` - the latest ready-to-flash zip
+- `release/` - the latest ready-to-flash zip (+ the optional launcher icon APK)
+- `launcher/` - source of the app-drawer icon app
 
 The bootanimation zips themselves are hosted on pCloud (links are in `module/webroot/catalog.json`).
 Note: line endings of `*.sh` must stay LF; with CRLF the phone shell fails.
