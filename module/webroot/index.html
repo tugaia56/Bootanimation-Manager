@@ -13,7 +13,7 @@ h1{margin:0 0 8px;font-size:19px}
 h1 span{color:var(--ac)}
 .row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:8px}
 #tabs .btn{flex:1 1 auto;padding:7px 6px;text-align:center}
-#upd.has::after{content:' \25CF';color:var(--warn)}
+#upd.has::after{content:' \25CF';color:#ffb020;font-size:15px;vertical-align:1px}
 .row::-webkit-scrollbar{display:none}
 .btn{white-space:nowrap;flex:none;border:1px solid #3a3a52;background:var(--card);color:var(--tx);border-radius:999px;padding:7px 13px;font-size:13px}
 .btn.on{background:var(--ac);color:#101018;border-color:var(--ac)}
@@ -273,6 +273,7 @@ async function checkUpdate(manual) {
     else if ((+nw.versionCode || 0) > (+cur.versionCode || 0)) { UPD = nw; renderBanner(); log(t('updAvail') + nw.version); }
     else { UPD = null; renderBanner(); if (manual) log(t('updNone') + (cur.version || '?') + ')'); }
     try { localStorage.setItem('bam_upd_check', String(Date.now())); } catch (e) {}
+    try { if (UPD) localStorage.setItem('bam_upd_cache', JSON.stringify({version: UPD.version, versionCode: UPD.versionCode})); else if (!nw.err) localStorage.removeItem('bam_upd_cache'); } catch (e) {}
     await bam('clean');
   } catch (e) { if (manual) log(t('updFail') + e); }
   busy = false;
@@ -298,9 +299,18 @@ async function init() {
   try { META = await (await fetch('meta.json')).json(); } catch (e) {}
   try { CAT = await (await fetch('catalog.json')).json(); } catch (e) {}
   await loadInstalled();
-  // silent update check, at most every 12 hours
+  // an update found earlier shows its dot / banner right away, before any new check
+  try {
+    const c = JSON.parse(localStorage.getItem('bam_upd_cache') || 'null');
+    if (c) {
+      const cur = parseProps((await bam('selfver')).out);
+      if ((+c.versionCode || 0) > (+cur.versionCode || 0)) { UPD = c; renderBanner(); }
+      else localStorage.removeItem('bam_upd_cache');
+    }
+  } catch (e) {}
+  // silent update check every time the Manager is opened (at most every 15 minutes)
   let last = 0; try { last = +localStorage.getItem('bam_upd_check') || 0; } catch (e) {}
-  if (Date.now() - last > 12 * 3600 * 1000) checkUpdate(false);
+  if (Date.now() - last > 15 * 60 * 1000) checkUpdate(false);
 }
 $('#upd').addEventListener('click', () => checkUpdate(true));
 init();
