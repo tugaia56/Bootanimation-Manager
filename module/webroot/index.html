@@ -157,7 +157,7 @@ function render() {
   } else if (tab === 'web') {
     out.push('<div class="note">' + t('webNote') + '<br>' + t('ofNote') + '</div>');
     const have = new Set(INST.map(i => i.id));
-    for (const c of CAT.filter(c => !text || (c.name + c.id).toLowerCase().includes(text))) {
+    for (const c of CAT.filter(c => !text || (c.name + c.id).toLowerCase().includes(text)).sort((a, b) => niceName(a.name).localeCompare(niceName(b.name), undefined, {sensitivity: 'base', numeric: true}))) {
       const tag = have.has(c.id) ? '<span class="tag t-inst">' + t('inst') + '</span>' : '';
       out.push('<div class="card">' + pv(c.id) + '<div class="info"><div class="nm">' + esc(c.name) + '</div><div class="sub">' + (c.size / 1048576).toFixed(1) + ' ' + t('size') + '</div><div>' + tag +
         '</div><div class="btns"><button class="btn pri" data-a="dluse" data-id="' + esc(c.id) + '">' + t('dlUse') + '</button><button class="btn" data-a="dl" data-id="' + esc(c.id) + '">' + t('dl') + '</button></div></div></div>');
