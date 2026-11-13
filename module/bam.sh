@@ -5,11 +5,13 @@ UPD=/data/adb/modules_update
 KSUD=/data/adb/ksu/bin/ksud
 TMP=/data/local/tmp/oxybam
 T=/my_product/media/bootanimation/bootanimation.zip
+# RisingOS (no /my_product): the stock animation is /product/media/bootanimation_rising.zip
+[ -d /my_product/media ] || T=/product/media/bootanimation_rising.zip
 
 # path of the bootanimation file of module $1 (installed or pending)
 bafile() {
   for b in "$MODS/$1" "$UPD/$1"; do
-    for f in "$b/my_product/media/bootanimation/bootanimation.zip" "$b/system/product/media/bootanimation.zip" "$b/system/media/bootanimation.zip"; do
+    for f in "$b/my_product/media/bootanimation/bootanimation.zip" "$b/system/product/media/bootanimation.zip" "$b/system/media/bootanimation.zip" "$b/system/product/media/bootanimation_rising.zip"; do
       if [ -f "$f" ]; then echo "$f"; return; fi
     done
   done
@@ -94,7 +96,7 @@ scan)
   dir=$1
   for z in "$dir"/*.zip; do
     [ -f "$z" ] || continue
-    unzip -l "$z" 2>/dev/null | grep -q "bootanimation.zip" || continue
+    unzip -l "$z" 2>/dev/null | grep -q "bootanimation[._a-z]*\.zip" || continue
     name=$(unzip -p "$z" module.prop 2>/dev/null | sed -n 's/^name=//p' | head -1 | tr -d '\r' | tr '|' '/')
     echo "$z|$(stat -c %s "$z")|$name"
   done
