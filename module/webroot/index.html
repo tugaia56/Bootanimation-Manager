@@ -33,6 +33,7 @@ input[type=search],input[type=text]{width:100%;padding:10px 12px;border-radius:1
 .nm{font-size:16px;font-weight:600;word-break:break-word}
 .sub{font-size:12px;color:var(--mut);word-break:break-all}
 .tag{font-size:11px;border-radius:6px;padding:1px 7px;margin-right:4px}
+.t-new{background:#3a2b55;color:#d9b8ff;font-weight:600}
 .t-on{background:#1f3a2c;color:var(--ok)}.t-off{background:#2b2b3a;color:var(--mut)}.t-pend{background:#3a321f;color:var(--warn)}.t-rm{background:#3a2326;color:var(--bad)}.t-inst{background:#2b2b55;color:var(--ac)}
 .btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
 footer{position:fixed;left:0;right:0;bottom:0;background:#191924;border-top:1px solid #2f2f42;padding:8px 12px}
@@ -62,7 +63,7 @@ footer{position:fixed;left:0;right:0;bottom:0;background:#191924;border-top:1px 
 const MOD = '/data/adb/modules/oxybootanim';
 const BAM = 'sh ' + MOD + '/bam.sh';
 const I18N = {
- it: {tInst:'Installate', tWeb:'Online', tDir:'Da cartella', tUpd:'Aggiorna', search:'Cerca...', active:'attiva', off:'spenta', pend:'serve riavvio', rm:'da rimuovere', inst:'installata',
+ it: {newTitle:'Novità', newIntro:'Nuove bootanimation nel catalogo:', newGo:'Vai a Online', newOk:'Chiudi', newTag:'NUOVA', newBtn:'Novità', tInst:'Installate', tWeb:'Online', tDir:'Da cartella', tUpd:'Aggiorna', search:'Cerca...', active:'attiva', off:'spenta', pend:'serve riavvio', rm:'da rimuovere', inst:'installata',
   playBtn:'Prova ora', useBtn:'Usa questa', rmBtn:'Rimuovi', dl:'Scarica e installa', dlUse:'Scarica e usa', installUse:'Installa e usa', oneReboot:'Basta un solo riavvio per vederla.', installBtn:'Installa', allOff:'Disattiva tutte (stock)', reboot:'Riavvia',
   needReboot:'Per applicare le modifiche serve un riavvio.', playing:'Riproduzione in corso...', noItems:'Nessuna bootanimation.', loading:'Carico...',
   askUse:'Usare questa bootanimation? Le altre verranno spente. Per vederla serve un riavvio.', askAllOff:'Spegnere tutte le bootanimation? Al riavvio tornerà quella di sistema.',
@@ -71,7 +72,7 @@ const I18N = {
   getting:'Preparo il download...', downloading:'Scarico...', installing:'Installo...', done:'Fatto: ', fail:'Errore: ', webNote:'Gli zip vengono scaricati da pCloud e installati spenti: poi scegli quale usare.',
   dirNote:'Metti gli zip in questa cartella del telefono e premi Cerca zip.', ofNote:'Quando uno zip viene sostituito su pCloud, il suo link smette di funzionare.', size:'MB', st:'Stato',
   updBtn:'Aggiorna app', updChecking:'Cerco aggiornamenti...', updAvail:'Aggiornamento disponibile: ', updNone:'Il Manager è già aggiornato (', updFail:'Aggiornamento non riuscito: ', updApplying:'Aggiorno il Manager...', updDone:'Aggiornato. Riapro...', askUpd:'Aggiornare il Manager? Non serve riavviare il telefono.'},
- en: {tInst:'Installed', tWeb:'Online', tDir:'From folder', tUpd:'Update', search:'Search...', active:'active', off:'off', pend:'reboot needed', rm:'to be removed', inst:'installed',
+ en: {newTitle:"What's new", newIntro:'New bootanimations in the catalog:', newGo:'Go to Online', newOk:'Close', newTag:'NEW', newBtn:"What's new", tInst:'Installed', tWeb:'Online', tDir:'From folder', tUpd:'Update', search:'Search...', active:'active', off:'off', pend:'reboot needed', rm:'to be removed', inst:'installed',
   playBtn:'Try now', useBtn:'Use this', rmBtn:'Remove', dl:'Download & install', dlUse:'Download & use', installUse:'Install & use', oneReboot:'One reboot is enough to see it.', installBtn:'Install', allOff:'Turn all off (stock)', reboot:'Reboot',
   needReboot:'A reboot is needed to apply the changes.', playing:'Playing...', noItems:'No bootanimations.', loading:'Loading...',
   askUse:'Use this bootanimation? The others will be turned off. A reboot is needed to see it.', askAllOff:'Turn off all bootanimations? The system one comes back after a reboot.',
@@ -132,6 +133,25 @@ function renderBanner() {
 function pv(id) {
   return '<div class="pv"><img loading="lazy" src="previews/' + encodeURIComponent(id) + '.webp" onerror="this.outerHTML=\'<div class=ph>no preview</div>\'"></div>';
 }
+function newOnes() { return CAT.filter(c => c.new); }
+function seenNew() { try { return new Set(JSON.parse(localStorage.getItem('bam_seen_new') || '[]')); } catch (e) { return new Set(); } }
+function markSeenNew() { try { localStorage.setItem('bam_seen_new', JSON.stringify(newOnes().map(c => c.id))); } catch (e) {} }
+// "What's new" window: lists the bootanimations flagged "new" in catalog.json; shown once, reopened from the Online tab
+function showNews() {
+  const list = newOnes().slice().sort((a, b) => niceName(a.name).localeCompare(niceName(b.name), undefined, {sensitivity: 'base', numeric: true}));
+  if (!list.length) return;
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:#000a;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px';
+  d.innerHTML = '<div style="background:#1f1f2b;border-radius:16px;padding:18px;max-width:420px;width:100%;max-height:80vh;overflow:auto">' +
+    '<div style="font-size:18px;font-weight:700;margin-bottom:4px">' + t('newTitle') + '</div>' +
+    '<div class="sub" style="margin-bottom:10px">' + t('newIntro') + '</div>' +
+    list.map(c => '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid #2b2b3a"><span class="nm" style="font-size:15px">' + esc(niceName(c.name)) + '</span><span class="sub" style="white-space:nowrap">' + (c.size / 1048576).toFixed(1) + ' ' + t('size') + '</span></div>').join('') +
+    '<div style="text-align:right;margin-top:14px"><button class="btn" id="nwok">' + t('newOk') + '</button> <button class="btn pri" id="nwgo">' + t('newGo') + '</button></div></div>';
+  document.body.appendChild(d);
+  const close = () => { markSeenNew(); d.remove(); };
+  d.querySelector('#nwok').onclick = close;
+  d.querySelector('#nwgo').onclick = () => { close(); tab = 'web'; document.querySelectorAll('#tabs .btn').forEach(x => x.classList.toggle('on', x.dataset.t === 'web')); render(); };
+}
 function niceName(n) { return String(n).replace(/^\s*\[?Bootanimation\]?\s*/i, ''); }
 
 async function loadInstalled() {
@@ -155,10 +175,11 @@ function render() {
     }
     if (!rows.length) out.push('<div class="note">' + t('noItems') + '</div>');
   } else if (tab === 'web') {
+    if (newOnes().length) out.push('<div class="row" style="margin:8px 10px"><button class="btn" id="newbtn">' + t('newBtn') + ' (' + newOnes().length + ')</button></div>');
     out.push('<div class="note">' + t('webNote') + '<br>' + t('ofNote') + '</div>');
     const have = new Set(INST.map(i => i.id));
     for (const c of CAT.filter(c => !text || (c.name + c.id).toLowerCase().includes(text)).sort((a, b) => niceName(a.name).localeCompare(niceName(b.name), undefined, {sensitivity: 'base', numeric: true}))) {
-      const tag = have.has(c.id) ? '<span class="tag t-inst">' + t('inst') + '</span>' : '';
+      const tag = (c.new ? '<span class="tag t-new">' + t('newTag') + '</span>' : '') + (have.has(c.id) ? '<span class="tag t-inst">' + t('inst') + '</span>' : '');
       out.push('<div class="card">' + pv(c.id) + '<div class="info"><div class="nm">' + esc(c.name) + '</div><div class="sub">' + (c.size / 1048576).toFixed(1) + ' ' + t('size') + '</div><div>' + tag +
         '</div><div class="btns"><button class="btn pri" data-a="dluse" data-id="' + esc(c.id) + '">' + t('dlUse') + '</button><button class="btn" data-a="dl" data-id="' + esc(c.id) + '">' + t('dl') + '</button></div></div></div>');
     }
@@ -172,6 +193,7 @@ function render() {
   $('#list').innerHTML = out.join('');
   const ao = $('#alloff'); if (ao) ao.onclick = async () => { if (await ask(t('askAllOff'))) { await bam('none'); needReboot = true; await loadInstalled(); } };
   const sc = $('#scan'); if (sc) sc.onclick = scanDir;
+  const nb = $('#newbtn'); if (nb) nb.onclick = showNews;
 }
 
 async function scanDir() {
@@ -299,6 +321,7 @@ async function init() {
   try { META = await (await fetch('meta.json')).json(); } catch (e) {}
   try { CAT = await (await fetch('catalog.json')).json(); } catch (e) {}
   await loadInstalled();
+  { const seen = seenNew(); if (newOnes().some(c => !seen.has(c.id))) showNews(); }
   // an update found earlier shows its dot / banner right away, before any new check
   try {
     const c = JSON.parse(localStorage.getItem('bam_upd_cache') || 'null');
